@@ -98,7 +98,15 @@ export class TradingChartComponent implements OnInit, OnChanges, OnDestroy {
   // Timeframe options
   timeframeOptions = [
     { label: '1 Minute', value: 'minute' },
+    { label: '2 Minute', value: '2minute' },
+    { label: '3 Minute', value: '3minute' },
+    { label: '4 Minute', value: '4minute' },
+    { label: '5 Minute', value: '5minute' },
+    { label: '10 Minute', value: '10minute' },
+    { label: '15 Minute', value: '15minute' },
+    { label: '30 Minute', value: '30minute' },
     { label: '1 Hour', value: 'hour' },
+    { label: '2 Hour', value: '2hour' },
     { label: '1 Day', value: 'day' }
   ];
 

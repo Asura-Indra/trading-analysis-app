@@ -24,8 +24,10 @@
       <td>{{ instrument.tradingsymbol }}</td>
       <td>
         <p-button
-          label="View"
-          (click)="setInstrument(instrument.instrument_token)"
+          label="View Details"
+          icon="pi pi-eye"
+          (click)="setInstrument(instrument)"
+          styleClass="p-button-sm"
         ></p-button>
       </td>
     </tr>
@@ -46,76 +48,115 @@
     </div>
   </ng-template>
 </p-table>
-@if (instrumentTokens) { @let data = marketStreamService.messageData | async;
-@if (data?.length) {
-<div class="instrument-stats">
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-label">Current Price</div>
-      <div class="stat-value">{{ data[0].currentPrice }}</div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-label">High</div>
-      <div class="stat-value">{{ data[0]?.highPrice }}</div>
+<!-- Instrument Details Dialog -->
+<p-dialog 
+  [(visible)]="displayDialog" 
+  [modal]="true" 
+  [style]="{width: '90vw', maxWidth: '1200px'}" 
+  [maximizable]="true" 
+  [baseZIndex]="10000"
+  [contentStyle]="{'max-height': '90vh', 'overflow': 'auto'}"
+  (onHide)="onDialogHide()"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true">
+  
+  <ng-template pTemplate="header">
+    <div class="flex justify-content-between align-items-center">
+      <h2 class="m-0">
+        {{selectedInstrument?.name}}
+        <span class="text-500 text-sm ml-2">#{{selectedInstrument?.instrument_token}}</span>
+      </h2>
+      <div class="elapsed-time" *ngIf="elapsedSeconds > 0">
+        <i class="pi pi-clock mr-1"></i>
+        <span>{{ elapsedTime.minutes }}:{{ elapsedTime.seconds.toString().padStart(2, '0') }}</span>
+      </div>
     </div>
+  </ng-template>
 
-    <div class="stat-card">
-      <div class="stat-label">Low</div>
-      <div class="stat-value">{{ data[0]?.lowPrice }}</div>
-    </div>
+  <div *ngIf="instrumentTokens">
+    @let data = marketStreamService.messageData | async;
+    @if (data?.length) {
+      <div class="instrument-stats mb-4">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Current Price</div>
+            <div class="stat-value">{{ data[0].currentPrice | number:'1.2-2' }}</div>
+          </div>
 
-    <div class="stat-card">
-      <div class="stat-label">Open</div>
-      <div class="stat-value">{{ data[0]?.openPrice }}</div>
-    </div>
+          <div class="stat-card">
+            <div class="stat-label">High</div>
+            <div class="stat-value">{{ data[0]?.highPrice | number:'1.2-2' }}</div>
+          </div>
 
-    <div class="stat-card">
-      <div class="stat-label">Close</div>
-      <div class="stat-value">{{ data[0]?.closePrice }}</div>
-    </div>
+          <div class="stat-card">
+            <div class="stat-label">Low</div>
+            <div class="stat-value">{{ data[0]?.lowPrice | number:'1.2-2' }}</div>
+          </div>
 
-    <div class="stat-card">
-      <div class="stat-label">Total Buy Qty</div>
-      <div class="stat-value">{{ data[0]?.totalBuyQuantity }}</div>
-    </div>
+          <div class="stat-card">
+            <div class="stat-label">Open</div>
+            <div class="stat-value">{{ data[0]?.openPrice | number:'1.2-2' }}</div>
+          </div>
 
-    <div class="stat-card">
-      <div class="stat-label">Total Sell Qty</div>
-      <div class="stat-value">{{ data[0]?.totalSellQuantity }}</div>
-    </div>
+          <div class="stat-card">
+            <div class="stat-label">Close</div>
+            <div class="stat-value">{{ data[0]?.closePrice | number:'1.2-2' }}</div>
+          </div>
 
-    <div class="stat-card">
-      <div class="stat-label">Volume</div>
-      <div class="stat-value">{{ data[0]?.volume }}</div>
-    </div>
-        <div class="stat-card">
-      <div class="stat-label">averageTradedPrice</div>
-      <div class="stat-value">{{ data[0]?.averageTradedPrice }}</div>
-    </div>
-  </div>
-</div>
-<div class="analysis-section">
-    <div class="analysis-header">
-      <div class="header-content">
-        <h3>Analysis</h3>
-        <div class="elapsed-time" *ngIf="elapsedSeconds > 0">
-          <i class="pi pi-clock"></i>
-          <span>{{ elapsedTime.minutes }}:{{ elapsedTime.seconds.toString().padStart(2, '0') }}</span>
+          <div class="stat-card">
+            <div class="stat-label">Total Buy Qty</div>
+            <div class="stat-value">{{ data[0]?.totalBuyQuantity | number }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Total Sell Qty</div>
+            <div class="stat-value">{{ data[0]?.totalSellQuantity | number }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Volume</div>
+            <div class="stat-value">{{ data[0]?.volume | number }}</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Avg. Traded Price</div>
+            <div class="stat-value">{{ data[0]?.averageTradedPrice | number:'1.2-2' }}</div>
+          </div>
         </div>
       </div>
-      <p-button label="Analyze Data" icon="pi pi-chart-line" (click)="analyzeData()" styleClass="p-button-outlined"></p-button>
-    </div>
-  <div class="analysis-result" *ngIf="analysisResult">
-    <i class="pi pi-info-circle"></i>
-    <span>{{ analysisResult }}</span>
+
+      <div class="analysis-section mb-4">
+        <div class="analysis-header">
+          <div class="header-content">
+            <h3>Analysis</h3>
+          </div>
+          <p-button 
+            label="Analyze Data" 
+            icon="pi pi-chart-line" 
+            (click)="analyzeData()" 
+            styleClass="p-button-outlined p-button-sm">
+          </p-button>
+        </div>
+        <div class="analysis-result p-3 border-round border-1 border-200 mt-2" *ngIf="analysisResult">
+          <i class="pi pi-info-circle mr-2"></i>
+          <span>{{ analysisResult }}</span>
+        </div>
+      </div>
+     
+      <app-trading-chart 
+        [instrumentToken]="instrumentTokens"
+        [tickData]="tickData"
+        [historicalDays]="60">
+      </app-trading-chart>
+    }
   </div>
-</div>
- 
-<app-trading-chart 
-  *ngIf="instrumentTokens" 
-  [instrumentToken]="instrumentTokens"
-  [tickData]="tickData"
-  [historicalDays]="60">
-</app-trading-chart>
-} }
+
+<ng-template pTemplate="footer">
+  <button pButton pRipple type="button" (click)="displayDialog = false" class="p-button-text">
+    <span class="p-button-label">Close</span>
+    <i class="pi pi-times ml-2"></i>
+  </button>
+</ng-template>
+</p-dialog>

@@ -9,6 +9,7 @@ import { MarketStreamService } from '../../services/market-stream.service';
 import { TradingSystem, Tick, TradeSignal } from '../../services/trading-system.service';
 import { TradingChartComponent, TickData } from '../trading-chart/trading-chart.component';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { debounceTime } from 'rxjs';
 
 interface Instrument {
@@ -28,6 +29,7 @@ interface Instrument {
     InputTextModule,
     InputIconModule,
     ButtonModule,
+    DialogModule,
     TradingChartComponent,
   ],
 })
@@ -40,6 +42,8 @@ export class TradingListComponent implements OnInit, OnDestroy {
   elapsedSeconds = 0;
   public tickData: TickData[] = [];
   private timer: number | null = null;
+  displayDialog = false;
+  selectedInstrument: Instrument | null = null;
   
   // Trade analysis properties - using the new TradingSystem
   private tradingSystem: TradingSystem | null = null;
@@ -123,19 +127,20 @@ export class TradingListComponent implements OnInit, OnDestroy {
       });
   }
 
-  setInstrument(instrumentToken: number) {
+  setInstrument(instrument: Instrument) {
     // Clear existing timer if any
     if (this.timer) {
       clearInterval(this.timer as unknown as number);
       this.timer = null;
     }
 
-    this.instrumentTokens = instrumentToken;
+    this.selectedInstrument = instrument;
+    this.instrumentTokens = instrument.instrument_token;
     console.log('Selected Instrument Token:', this.instrumentTokens);
     this.tickData = [];
     this.analysisResult = '';
     this.elapsedSeconds = 0;
-    this.currentTradeSignal = null; // Clear any existing trade signals
+    this.currentTradeSignal = null;
 
     // Reset trading system for new instrument
     if (this.tradingSystem) {
@@ -147,10 +152,27 @@ export class TradingListComponent implements OnInit, OnDestroy {
     // Start new timer
     this.timer = window.setInterval(() => {
       this.elapsedSeconds++;
-    }, 1000); // Update every second
+    }, 1000);
 
     this.marketStreamService.disconnect();
     this.marketStreamService.connect([this.instrumentTokens]);
+    
+    // Show the dialog
+    this.displayDialog = true;
+  }
+
+  onDialogHide() {
+    // Clean up when dialog is closed
+    if (this.timer) {
+      clearInterval(this.timer as unknown as number);
+      this.timer = null;
+    }
+    this.marketStreamService.disconnect();
+    this.instrumentTokens = null;
+    this.tickData = [];
+    this.elapsedSeconds = 0;
+    this.analysisResult = '';
+    this.currentTradeSignal = null;
   }
 
   ngOnDestroy() {
