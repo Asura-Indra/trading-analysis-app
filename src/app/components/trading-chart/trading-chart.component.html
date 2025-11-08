@@ -1,0 +1,69 @@
+<div class="chart-container" *ngIf="instrumentToken">
+  <div class="chart-controls">
+    <div class="control-group">
+      <label for="timeframe">Timeframe:</label>
+      <p-select 
+        id="timeframe"
+        [options]="timeframeOptions" 
+        [(ngModel)]="currentTimeframe"
+        optionLabel="label"
+        optionValue="value"
+        (onChange)="onTimeframeChange()"
+        styleClass="timeframe-select">
+      </p-select>
+    </div>
+
+    <div class="control-group indicators">
+      <label>Indicators:</label>
+      <div class="checkbox-group">
+        <p-checkbox 
+          [(ngModel)]="showVolume" 
+          (onChange)="onVolumeToggle()"
+          label="Volume"
+          binary="true"
+          inputId="volume">
+        </p-checkbox>
+        <p-checkbox 
+          [(ngModel)]="showSMA" 
+          (onChange)="onSMAToggle()"
+          label="SMA(20)"
+          binary="true"
+          inputId="sma">
+        </p-checkbox>
+        <p-checkbox 
+          [(ngModel)]="showEMA" 
+          (onChange)="onEMAToggle()"
+          label="EMA(20)"
+          binary="true"
+          inputId="ema">
+        </p-checkbox>
+      </div>
+    </div>
+
+    <div class="control-group drawing-tools">
+      <label>Drawing Tools:</label>
+      <div class="tool-buttons">
+        <p-button 
+          *ngFor="let tool of drawingTools"
+          [label]="tool.name"
+          [icon]="tool.icon || 'pi-pencil'"
+          [outlined]="selectedDrawingTool?.id !== tool.id"
+          [severity]="selectedDrawingTool?.id === tool.id ? 'info' : 'secondary'"
+          (click)="selectDrawingTool(tool)"
+          size="small"
+          styleClass="drawing-tool-btn">
+        </p-button>
+        <p-button 
+          label="Clear All"
+          icon="pi-trash"
+          severity="danger"
+          [outlined]="true"
+          (click)="clearAllDrawings()"
+          size="small">
+        </p-button>
+      </div>
+    </div>
+  </div>
+  
+  <div #chartContainer class="chart-wrapper" [class.drawing-mode]="isDrawingMode"></div>
+</div>

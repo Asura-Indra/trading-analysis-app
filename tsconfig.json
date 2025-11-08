@@ -6,7 +6,10 @@
     "module": "preserve",
     "lib": ["es2020", "dom"],
     "paths": {},
-    "isolatedModules": true
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

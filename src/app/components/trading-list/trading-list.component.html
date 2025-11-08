@@ -112,7 +112,10 @@
   </div>
 </div>
  
-<div class="chart-container" *ngIf="tickData?.length">
-  <canvas #chartCanvas></canvas>
-</div>
+<app-trading-chart 
+  *ngIf="instrumentTokens" 
+  [instrumentToken]="instrumentTokens"
+  [tickData]="tickData"
+  [historicalDays]="60">
+</app-trading-chart>
 } }
