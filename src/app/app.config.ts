@@ -5,6 +5,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { HttpClientModule, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideZoneChangeDetection } from '@angular/core';
 import { withCredentialsInterceptor } from './services/auth.interceptor';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeuix/themes/aura';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +16,11 @@ export const appConfig: ApplicationConfig = {
     ),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideAnimationsAsync()
+    provideAnimationsAsync(),
+    providePrimeNG({
+            theme: {
+                preset: Aura
+            }
+        })
   ],
 };
