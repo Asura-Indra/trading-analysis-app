@@ -68,14 +68,16 @@
         {{selectedInstrument?.name}}
         <span class="text-500 text-sm ml-2">#{{selectedInstrument?.instrument_token}}</span>
       </h2>
-      <div class="elapsed-time" *ngIf="elapsedSeconds > 0">
-        <i class="pi pi-clock mr-1"></i>
-        <span>{{ elapsedTime.minutes }}:{{ elapsedTime.seconds.toString().padStart(2, '0') }}</span>
-      </div>
+      @if (elapsedSeconds > 0) {
+        <div class="elapsed-time">
+          <i class="pi pi-clock mr-1"></i>
+          <span>{{ elapsedTime.minutes }}:{{ elapsedTime.seconds.toString().padStart(2, '0') }}</span>
+        </div>
+      }
     </div>
   </ng-template>
-
-  <div *ngIf="instrumentTokens">
+  
+  @if (instrumentTokens) {
     @let data = marketStreamService.messageData | async;
     @if (data?.length) {
       <div class="instrument-stats mb-4">
@@ -126,6 +128,7 @@
           </div>
         </div>
       </div>
+    }
 
       <div class="analysis-section mb-4">
         <div class="analysis-header">
@@ -151,7 +154,6 @@
         [historicalDays]="60">
       </app-trading-chart>
     }
-  </div>
 
 <ng-template pTemplate="footer">
   <button pButton pRipple type="button" (click)="displayDialog = false" class="p-button-text">

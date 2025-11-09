@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 export interface HistoricalCandle {
   time: number; // Unix timestamp in seconds
@@ -32,9 +33,25 @@ interface ZerodhaHistoricalResponse {
 })
 export class HistoricalDataService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   
   // Proxy server URL - change this if your proxy runs on a different port
   private readonly PROXY_BASE_URL = 'http://localhost:3001/api';
+  
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    const enctoken = localStorage.getItem('enctoken');
+    if (!enctoken) {
+      this.authService.logout();
+      throw new Error('No authentication token found');
+    }
+    
+    return {
+      headers: new HttpHeaders({
+        'Authorization': `enctoken ${enctoken}`,
+        'Content-Type': 'application/json'
+      })
+    };
+  }
 
   /**
    * Fetches historical minute data for an instrument
@@ -45,43 +62,44 @@ export class HistoricalDataService {
    * @returns Observable of historical candle data
    */
   getHistoricalData(
-    instrumentToken: number,
+    instrumentToken: number | string,
     fromDate: string,
     toDate: string,
     interval = 'minute'
   ): Observable<HistoricalCandle[]> {
-    // Use proxy server endpoint
-    const url = `${this.PROXY_BASE_URL}/historical/${instrumentToken}/${interval}`;
-    const params = {
-      oi: '1',
-      from: fromDate,
-      to: toDate
-    };
-
-    // Proxy server handles authentication, so we just need to pass query params
-    return this.http.get<ZerodhaHistoricalResponse>(url, { 
-      params
-    }).pipe(
-      map((response) => {
-        if (response.status === 'success' && response.data?.candles) {
-          // Zerodha returns candles as: [ISO_timestamp_string, open, high, low, close, volume, oi]
-          return response.data.candles.map((candle) => {
-            // Parse ISO 8601 timestamp string (e.g., "2025-09-10T09:15:00+0530") to Unix timestamp (seconds)
-            const timestamp = new Date(candle[0]).getTime() / 1000;
-            
-            return {
-              time: Math.floor(timestamp), // Unix timestamp in seconds
-              open: candle[1],
-              high: candle[2],
-              low: candle[3],
-              close: candle[4],
-              volume: candle[5] || 0
-            };
-          });
+    const url = `${this.PROXY_BASE_URL}/historical/${instrumentToken}/${interval}?from=${fromDate}&to=${toDate}`;
+    
+    return this.http.get<ZerodhaHistoricalResponse>(url, this.getAuthHeaders()).pipe(
+      map(response => this.transformResponse(response)),
+      catchError(error => {
+        console.error('Error fetching historical data:', error);
+        if (error.status === 401) {
+          this.authService.logout();
         }
-        return [];
+        return throwError(() => new Error('Failed to fetch historical data'));
       })
     );
+  }
+  
+  private transformResponse(response: ZerodhaHistoricalResponse): HistoricalCandle[] {
+    if (!response?.data?.candles) {
+      console.warn('No candle data in response');
+      return [];
+    }
+    
+    try {
+      return response.data.candles.map(candle => ({
+        time: Math.floor(new Date(candle[0]).getTime() / 1000), // Convert to Unix timestamp
+        open: candle[1],
+        high: candle[2],
+        low: candle[3],
+        close: candle[4],
+        volume: candle[5]
+      }));
+    } catch (error) {
+      console.error('Error transforming response:', error);
+      return [];
+    }
   }
 
   /**

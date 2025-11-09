@@ -2,6 +2,7 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
+import { MarketDataPacket } from '../../services/market-stream.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputIconModule } from 'primeng/inputicon';
@@ -63,15 +64,15 @@ export class TradingListComponent implements OnInit, OnDestroy {
     
     this.marketStreamService.messageData.pipe(debounceTime(5000)).subscribe((data) => {
       if (data?.length) {
-        // Add timestamp to each tick if not present and convert to TickData format
-        const ticksWithTimestamp: TickData[] = data.map((tick: Record<string, unknown>) => ({
-          timestamp: (typeof tick.timestamp === 'number' && tick.timestamp > 0 ? tick.timestamp : Date.now()),
-          currentPrice: typeof tick.currentPrice === 'number' ? tick.currentPrice : undefined,
-          openPrice: typeof tick.openPrice === 'number' ? tick.openPrice : undefined,
-          highPrice: typeof tick.highPrice === 'number' ? tick.highPrice : undefined,
-          lowPrice: typeof tick.lowPrice === 'number' ? tick.lowPrice : undefined,
-          closePrice: typeof tick.closePrice === 'number' ? tick.closePrice : undefined,
-          volume: typeof tick.volume === 'number' ? tick.volume : undefined,
+        // Convert MarketDataPacket to TickData format
+        const ticksWithTimestamp: TickData[] = data.map((tick: MarketDataPacket) => ({
+          timestamp: Date.now(), // Use current timestamp since MarketDataPacket doesn't have one
+          currentPrice: tick.currentPrice || 0,
+          openPrice: tick.openPrice || 0,
+          highPrice: tick.highPrice || 0,
+          lowPrice: tick.lowPrice || 0,
+          closePrice: tick.closePrice || 0,
+          volume: tick.volume || 0,
         }));
         this.tickData.push(...ticksWithTimestamp);
         
